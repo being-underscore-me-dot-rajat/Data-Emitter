@@ -23,6 +23,7 @@ PRICE_RANGE = {
 
 
 def generate_order_event():
+    print("Checkpoint 1")
     product_id = random.choice(PRODUCTS)
     price_min, price_max = PRICE_RANGE[product_id]
 
@@ -48,4 +49,5 @@ def generate_order_event():
 def eventhub_producer(timer: func.TimerRequest, event: func.Out[str]) -> None:
     order_event = generate_order_event()
     event.set(json.dumps(order_event))
+    print("Checkpoint 2")
     logging.info(f"✅ Sent event: {order_event}")
