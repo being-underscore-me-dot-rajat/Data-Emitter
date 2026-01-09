@@ -2,19 +2,17 @@ import json
 import random
 import uuid
 import logging
+import os
+import traceback
 from datetime import datetime, timezone
 
 import azure.functions as func
 from azure.eventhub import EventHubProducerClient, EventData
-import os
 
 
-# ---- Event Hub configuration (use App Settings in Azure) ----
-EVENT_HUB_CONN_STR = os.environ["EVENT_HUB_CONNECTION_STRING"]
-EVENT_HUB_NAME = os.environ["EVENT_HUB_NAME"]
+EVENT_HUB_CONN_STR = os.environ.get("EVENT_HUB_CONNECTION_STRING")
 
 
-# ---- Controlled dictionaries & ranges ----
 PRODUCTS = ["P1001", "P1002", "P1003", "P2001", "P3001"]
 REGIONS = ["NA", "EU", "APAC"]
 ORDER_STATUS = ["CREATED", "CONFIRMED", "SHIPPED"]
@@ -45,16 +43,25 @@ def generate_order_event():
 
 
 def main(mytimer: func.TimerRequest) -> None:
-    producer = EventHubProducerClient.from_connection_string(
-        conn_str=EVENT_HUB_CONN_STR
-    )
+    try:
+        if not EVENT_HUB_CONN_STR:
+            raise ValueError("EVENT_HUB_CONNECTION_STRING is not set")
 
-    event = generate_order_event()
-    event_json = json.dumps(event)
+        producer = EventHubProducerClient.from_connection_string(
+            conn_str=EVENT_HUB_CONN_STR
+        )
 
-    with producer:
-        batch = producer.create_batch()
-        batch.add(EventData(event_json))
-        producer.send_batch(batch)
+        event = generate_order_event()
+        event_json = json.dumps(event)
 
-    logging.info(f"Sent event: {event_json}")
+        with producer:
+            batch = producer.create_batch()
+            batch.add(EventData(event_json))
+            producer.send_batch(batch)
+
+        logging.info(f"Sent event successfully: {event_json}")
+
+    except Exception as e:
+        logging.error("❌ Failed to send event to Event Hub")
+        logging.error(str(e))
+        logging.error(traceback.format_exc())
