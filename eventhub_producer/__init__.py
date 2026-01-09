@@ -46,8 +46,7 @@ def generate_order_event():
 
 def main(mytimer: func.TimerRequest) -> None:
     producer = EventHubProducerClient.from_connection_string(
-        conn_str=EVENT_HUB_CONN_STR,
-        eventhub_name=EVENT_HUB_NAME
+        conn_str=EVENT_HUB_CONN_STR
     )
 
     event = generate_order_event()
