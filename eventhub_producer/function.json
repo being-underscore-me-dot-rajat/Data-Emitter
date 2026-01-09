@@ -6,6 +6,13 @@
       "type": "timerTrigger",
       "direction": "in",
       "schedule": "*/5 * * * * *"
+    },
+    {
+      "name": "outputEventHub",
+      "type": "eventHub",
+      "direction": "out",
+      "eventHubName": "data-emitter",
+      "connection": "EVENT_HUB_CONNECTION_STRING"
     }
   ]
 }
