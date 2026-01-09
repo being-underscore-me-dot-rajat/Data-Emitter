@@ -3,8 +3,11 @@ import random
 import uuid
 import logging
 from datetime import datetime, timezone
+from typing import List
+
 import azure.functions as func
 
+app = func.FunctionApp()
 
 PRODUCTS = ["P1001", "P1002", "P1003", "P2001", "P3001"]
 REGIONS = ["NA", "EU", "APAC"]
@@ -35,7 +38,14 @@ def generate_order_event():
     }
 
 
-def main(mytimer: func.TimerRequest, outputEventHub: func.Out[str]) -> None:
-    event = generate_order_event()
-    outputEventHub.set(json.dumps(event))
-    logging.info(f"✅ Sent event: {event}")
+@app.function_name(name="eventhub_producer")
+@app.schedule(schedule="*/5 * * * * *", arg_name="timer", run_on_startup=False)
+@app.event_hub_output(
+    arg_name="event",
+    event_hub_name="data-emitter",
+    connection="EVENT_HUB_CONNECTION_STRING"
+)
+def eventhub_producer(timer: func.TimerRequest, event: func.Out[str]) -> None:
+    order_event = generate_order_event()
+    event.set(json.dumps(order_event))
+    logging.info(f"✅ Sent event: {order_event}")
